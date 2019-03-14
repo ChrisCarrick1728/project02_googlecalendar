@@ -12,4 +12,6 @@ express()
     res.write("hello World")
     res.end();
   })
+  .get('/service/loginUser')
+  .get('/service/listEvent')
   .listen(8000, () => { console.log("server started on port: 8000")})
