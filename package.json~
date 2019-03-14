@@ -1,0 +1,25 @@
+{
+  "name": "project02_googlecalendar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChrisCarrick1728/project02_googlecalendar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChrisCarrick1728/project02_googlecalendar/issues"
+  },
+  "homepage": "https://github.com/ChrisCarrick1728/project02_googlecalendar#readme",
+  "dependencies": {
+    "dotenv": "^7.0.0",
+    "express": "^4.16.4",
+    "pg": "^7.8.2"
+  }
+}

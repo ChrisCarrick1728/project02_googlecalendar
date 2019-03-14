@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <p>{{ message }}</p>
+      <button type="button" v-on:click="loadstuff">Change</button>
+    </div>
+    <script>
+      var app = new Vue({
+        el: '#app',
+        data: {
+          message: 'hello Vue!'
+        },
+        methods: {
+          loadstuff: function() {
+            console.log("loadstuff")
+            axios.get('/services/test')
+              .then(response => {
+                this.message = response.data;
+              }) 
+              .catch(function (err) {
+                console.log(err)
+              })
+          }
+        }
+      })
+    </script>
+  </body>
+</html>
