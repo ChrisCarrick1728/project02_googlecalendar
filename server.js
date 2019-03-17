@@ -3,6 +3,7 @@ var passport = require('passport');
 var Strategy = require('passport-local').Strategy;
 var db = require('./db');
 const bcrypt = require('bcrypt')
+const PORT = process.env.PORT || 8000
 
 
 // Configure the local strategy for use by Passport.
@@ -111,4 +112,4 @@ app.get('/profile',
     res.render('profile', { user: req.user });
   });
 
-app.listen(8000, () => {console.log("Server listening on: 8000")});
+app.listen(PORT, () => {console.log("Server listening on: " + PORT)});
