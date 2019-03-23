@@ -87,7 +87,7 @@ function setToken(token, users_id, cb) {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(callback, res, users_id, cb) {
-  //console.log("CREDENTIAL: " + CREDENTIAL)
+  console.log("CREDENTIAL: " + CREDENTIAL)
   const {client_secret, client_id, redirect_uris} = JSON.parse(CREDENTIAL).installed;
   redirect_uris[1] = process.env.GOOGLE_REDIRECT_URI
   const oAuth2Client = new google.auth.OAuth2(
