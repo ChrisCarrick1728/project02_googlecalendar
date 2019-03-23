@@ -11,20 +11,36 @@
   </head>
   <body>
     <div id="app">
-      <h1>Hi {{vName}} {{message}}</h1>
+      <h1>Hi {{vName}}, {{message}}</h1>
       <a href="/googleConnect">GoogleConnect</a></br>
       <a href="/calendar">Display Calendar</a></br>
       <a href="/getEvents">Get Events</a></br>
       <a href="/logout">Logout</a>
+      <div class="calendarItem" v-for="events in calData">
+        <h2>{{events.summary}}</h2>
+        <p> {{events.start.dateTime}}</p>
+        <div v-if="!events.start.dateTime">
+          <p> {{events.start.date}} to {{events.end.date}}
+        </div>
+      </div>
     </div>
     <script>
+      
       var app = new Vue({
         el: '#app',
         data: {
           vName: '<%= name %>',
-          message: 'you are authenticated'
+          message: 'Here\'s your calendar items',
+          calData: []
         },
       })
+      window.onload = function() {
+        axios.get('/services/listEvents')
+             .then((res) => {
+               console.log(this.app._data)
+               this.app._data.calData = res.data
+             })
+      }
     </script>
   </body>
 </html>

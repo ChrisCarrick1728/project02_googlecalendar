@@ -4,7 +4,8 @@ var Strategy = require('passport-local').Strategy;
 var db = require('./db');
 const bcrypt = require('bcrypt')
 const PORT = process.env.PORT || 8000
-
+const { google } = require('googleapis')
+const compute = google.compute('v1')
 
 // Configure the local strategy for use by Passport.
 //
@@ -55,7 +56,7 @@ app.set('view engine', 'ejs');
 app.use(require('morgan')('combined'));
 app.use(require('cookie-parser')());
 app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
+app.use(require('express-session')({ secret: 'thisis@s3c43tk3^', resave: false, saveUninitialized: false }));
 
 // Initialize Passport and restore authentication state, if any, from the
 // session.
@@ -99,7 +100,32 @@ app.get('/auth', require('connect-ensure-login').ensureLoggedIn(), (req, res) =>
   var params = {'name': req.user.username}
   res.render('authPage', params)
 })
+
+app.get('/googleConnect', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  db.googleAuth.authorize(db.googleAuth.listEvents, res, req.user.id)
+})
   
+app.get('/googleAuth', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  db.googleAuth.returnOauthCode(req.query.code, req.user.id)
+  res.redirect('/calendar')
+  res.end();
+})
+
+app.get('/calendar', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  var params = {'name': req.user.username}
+  res.render('calendar', params)
+})
+
+
+// Services
+app.get('/services/listEvents', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+    db.googleAuth.authorize(db.googleAuth.listEvents, res, req.user.id, (data) => {
+    res.writeHead('200', {'content-type': 'application/json'})
+    res.write(JSON.stringify(data))
+    res.end();
+  })
+})
+
 app.get('/logout',
   function(req, res){
     req.logout();
