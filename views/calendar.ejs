@@ -12,10 +12,14 @@
   <body>
     <div id="app">
       <h1>Hi {{vName}}, {{message}}</h1>
+      <p>Use GoogleConnect to connect to your google account (you only need to do this the first time you login after creating a new account. If you have already connected to google you will be redirected to "Display Calendar")</p>
       <a href="/googleConnect">GoogleConnect</a></br>
+      <p>Use Display Calendar to display all calendar events</p>
       <a href="/calendar">Display Calendar</a></br>
-      <a href="/getEvents">Get Events</a></br>
-      <a href="/logout">Logout</a>
+      <h2>Web Services</h2>
+      <a href="/services/listEvents">listEvents (displays event info in JSON)</a></br>
+      <a href="/services/listCalendars">listCalenars (displays calendar info in JSON)</a></br></br>
+    <a href="/logout">Logout</a>
       <div class="calendarItem" v-for="events in calData">
         <h2>{{events.summary}}</h2>
         <p> {{events.start.dateTime}}</p>
