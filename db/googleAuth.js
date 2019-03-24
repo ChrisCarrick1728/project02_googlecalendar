@@ -139,7 +139,7 @@ function returnOauthCode(code, users_id) {
  * Lists the next 10 events on the user's primary calendar.
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-function listEvents(auth, calendar, cb) {
+function listEvents(auth, cb) {
   //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
