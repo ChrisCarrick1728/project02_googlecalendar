@@ -143,7 +143,7 @@ function listEvents(auth, cb) {
   //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
-    calendarId: calendar,
+    calendarId: 'primary',
     timeMin: (new Date()).toISOString(),
     maxResults: 10,
     singleEvents: true,
