@@ -102,7 +102,10 @@ app.get('/auth', require('connect-ensure-login').ensureLoggedIn(), (req, res) =>
 })
 
 app.get('/googleConnect', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  db.googleAuth.authorize(db.googleAuth.listEvents, res, req.user.id)
+  db.googleAuth.authorize(db.googleAuth.listEvents, res, req.user.id, (data) => {
+    console.log(data);
+    res.redirect('/calendar')
+  })
 })
   
 app.get('/googleAuth', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
@@ -124,6 +127,14 @@ app.get('/services/listEvents', require('connect-ensure-login').ensureLoggedIn()
     res.write(JSON.stringify(data))
     res.end();
   })
+})
+
+app.get('/services/listCalendars', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  db.googleAuth.authorize(db.googleAuth.listCalendars, res, req.user.id, (data) => {
+  res.writeHead('200', {'content-type': 'application/json'})
+  res.write(JSON.stringify(data))
+  res.end();
+})
 })
 
 app.get('/logout',
