@@ -162,14 +162,14 @@ app.get('/auth', require('connect-ensure-login').ensureLoggedIn(), (req, res) =>
 
 app.get('/googleConnect', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   db.googleAuth.authorize(db.googleAuth.listEvents, null, res, req.user.id, (err, data) => {
-    console.log(data);
-    res.redirect('/calendar')
+    //console.log(data);
+    res.redirect('/calendar/month/')
   })
 })
   
 app.get('/googleAuth', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   db.googleAuth.returnOauthCode(req.query.code, req.user.id)
-  res.redirect('/calendar')
+  res.redirect('/calendar/month/')
   res.end();
 })
 
