@@ -1,32 +1,43 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title></title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="../../css/header.css">
+    <link rel="stylesheet" href="../../css/main.css">
   </head>
   <body>
-    <form action="/register" method="post">
-      <div>
-        <label for="username">Username</label>
-        <input type="text" name="username" id="username">
+    <header>
+      <nav>
+        <h1>Calendar App</h1>
+      </nav>
+    </header>
+    <div class="loginForm">
+      <div class="loginDiv"> 
+          <h2>Please fill out the Form to Register:</h2>     
+        <form action="/register" method="post">
+          <div>
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username">
+          </div>
+          <div>
+            <label for="password1">Password</label>
+            <input type="password" name="password1" id="password1">
+          </div>
+          <div>
+            <label for="password2">Re-enter Passwrod</label>
+            <input type="password" name="password2" id="password2">
+          </div>
+          <button type="submit">Register</button>
+          <div>
+            <p>or</p>
+          </div>
+          <button type="button" onclick="window.location.href = '/login'">Login</button>
+        </form>
       </div>
-      <div>
-        <label for="password1">Password</label>
-        <input type="password" name="password1" id="password1">
-      </div>
-      <div>
-        <label for="password2">Re-enter Passwrod</label>
-        <input type="password" name="password2" id="password2">
-      </div>
-      <button type="submit">Register</button>
-    </form>
+    </div>
     
     <script src="" async defer></script>
   </body>

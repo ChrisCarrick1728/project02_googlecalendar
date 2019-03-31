@@ -5,30 +5,197 @@
     <title></title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="../../css/header.css">
+    <link rel="stylesheet" href="../../css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   </head>
   <body>
     <div id="app">
-      <h1>Hi {{vName}}, {{message}}</h1>
-      <p>Use GoogleConnect to connect to your google account (you only need to do this the first time you login after creating a new account. If you have already connected to google you will be redirected to "Display Calendar")</p>
-      <a href="/googleConnect">GoogleConnect</a></br>
-      <p>Use Display Calendar to display all calendar events</p>
-      <a href="/calendar">Display Calendar</a></br>
-      <h2>Web Services</h2>
-      <a href="/services/listEvents">listEvents (displays event info in JSON)</a></br>
-      <a href="/services/listCalendars">listCalenars (displays calendar info in JSON)</a></br></br>
-      <a href="/logout">Logout</a>
+      <% include ./partials/header.ejs %>
+      <section id="calendar">
+      <div class="topBar">
+        <ul>
+          <li><button v-on:click="prevMonth(monthData.currentMonth, monthData.currentYear)"><</button></li>
+          <li><button class="leftButton">Month</button></li>
+          <li><button class="centerButton">Week</button></li>
+          <li><button class="rightButton">Day</button></li>
+          <li><button v-on:click="nextMonth(monthData.currentMonth, monthData.currentYear)">></button></li>
+        </ul>
+      </div>
+
+      <!-- Default view - Month Calendar -->
+      <div class="monthHeader">
+        <div class="dayTitle"><p>Sunday</p></div>
+        <div class="dayTitle"><p>Monday</p></div>
+        <div class="dayTitle"><p>Tuesday</p></div>
+        <div class="dayTitle"><p>Wednesday</p></div>
+        <div class="dayTitle"><p>Thursday</p></div>
+        <div class="dayTitle"><p>Friday</p></div>
+        <div class="dayTitle"><p>Saturday</p></div>
+      </div>
+      <div id="monthCalendarEvents">
+        <div v-if="showEvents" v-for="weeks in monthData.month" class="week">
+          <div v-for="days in weeks"  class="day">
+            <div v-if="monthEvents[days.date].hasEvent == true">
+              <div class="eventTopSpacer"></div>
+              <div class="eventDiv" v-for="events in monthEvents[days.date].events">
+                <button>{{events.summary}}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>  
+      <div id="monthCalendar">        
+        <div v-for="weeks in monthData.month" class="week">
+          <div v-for="days in weeks" class="day">
+            <div v-if="days.inCurrentMonth == 'true'" class="inCurrentMonth" v-bind:id="days.ISOString">
+              <p>{{days.day}}</p>
+            </div>
+            <div v-else class="outOfMonth"  v-bind:id="days.ISOString">
+              <p>{{days.day}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+       
+      </section>   
     </div>
     <script>
       var app = new Vue({
         el: '#app',
         data: {
           vName: '<%= name %>',
-          message: 'you have been authenticated'
+          message: 'you have been authenticated',
+          monthData: '',
+          weeks: {},
+          monthEvents: '',
+          day: '',
+          month: '',
+          year: '',
+          dateParam: '<%= date %>',
+          calData: '',
+          view: '<%= view %>',
+          showEvents: false,
+          numRows: ''
         },
+        methods: {
+          nextMonth: function(month, year) {
+            if (month + 1 == 13) {
+              month = 1;
+              year++;
+            } else {
+              month++
+            }
+            getMonthView(month, year)
+
+          },
+          prevMonth: function(month, year) {
+            if (month - 1 == 0) {
+              month = 12;
+              year--;
+            } else {
+              month--;
+            }
+            getMonthView(month, year)
+          }
+        }
       })
+      window.onload = function() {
+        // Get Month Calendar View
+        var d = this.app._data.dateParam
+        var dObject = d.split('-')
+        this.app._data.day   = dObject[1]
+        this.app._data.month = dObject[0]
+        this.app._data.year  = dObject[2]
+
+        
+
+        
+        getMonthView(null, null)
+        
+      }
+
+      window.onresize = function() {
+        setHeight();
+      }
+
+      function setHeight() {
+        var monthTop = document.getElementById('monthCalendar').offsetTop;
+        var monthBottom = window.innerHeight;
+        var numRows = Object.keys(this.app._data.weeks).length;
+        console.log('nr: ' + numRows)
+        document.getElementById('monthCalendarEvents').style.top = monthTop + 43  + 'px'
+        document.styleSheets[1].rules[11].style.height = (monthBottom - monthTop - 43) / numRows + 'px'
+      }
+
+      function getMonthView(month, year) {
+        if (!month || !year) {
+          var d = new Date()
+          month = d.getMonth() + 1
+          year = d.getFullYear()
+        }
+
+        var params = {
+          'params': {
+            'month': month,
+            'year': year
+          }
+        }
+        console.log(params)
+        axios.get('/services/getMonthView', params)
+          .then ((res) => {
+            console.log(res.data)
+            this.app._data.monthData = res.data
+            this.app._data.weeks = res.data.month
+
+            var weekObj = this.app._data.weeks;
+            var month = {}
+            for (var weeks = 0; weeks < Object.keys(weekObj).length; weeks++) {
+              //var month = {}
+              for (var days = 0; days < 7; days++) {
+                var day = weekObj[weeks][days]
+                month[day.year + '-' + day.month + '-' + day.day] = {
+                  hasEvent: false,
+                  events: {}
+                }                  
+              }
+            }
+            this.app._data.monthEvents = month
+            setHeight()
+            getMonthEvents(res.data.month)
+          })
+      }
+
+      function getMonthEvents(month) {
+        var params = {
+          view: this.app._data.view,  
+          start: this.app._data.monthData.startDay,
+          end: this.app._data.monthData.endDay
+        }
+        console.log(params)
+
+        axios.post('/services/listEvents', params)
+            .then((res) => {
+              console.log(res.data)
+              this.app._data.calData = res.data
+              var month = this.app._data.monthEvents
+              console.log(month)
+              events = res.data
+              for (var event = 0; event < events.length; event++) {
+                var eventStartDate = (events[event].start.date ? events[event].start.date : events[event].start.dateTime.split('T')[0])
+                console.log(eventStartDate)
+                console.log(month[eventStartDate])
+                month[eventStartDate].events[events[event].id] = events[event] 
+                month[eventStartDate].hasEvent = true;
+              }
+              //console.log(month)
+              this.app._data.monthEvents = month
+              this.app._data.showEvents = true
+              
+
+            })
+      }
     </script>
   </body>
 </html>

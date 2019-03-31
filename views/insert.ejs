@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Hi {{vName}}, {{message}} for {{month}}/{{day}}/{{year}}</h1>
+      <p>Use GoogleConnect to connect to your google account (you only need to do this the first time you login after creating a new account. If you have already connected to google you will be redirected to "Display Calendar")</p>
+      <a href="/googleConnect">GoogleConnect</a></br>
+      <p>Use Display Calendar to display all calendar events</p>
+      <a href="/calendar">Display Calendar</a></br>
+      <h2>Web Services</h2>
+      <a href="/services/listEvents">listEvents (displays event info in JSON)</a></br>
+      <a href="/services/listCalendars">listCalenars (displays calendar info in JSON)</a></br></br>
+      <a href="/logout">Logout</a>
+      <form>
+        <label for="summary">Title:</label>
+        <input type="text" name="summary" id="summary" v-model="summary" required>
+        <label for="startDate">Starts</label>
+        <input type="date" name="startDate" id="startDate" v-model="startDate" required>
+        <input type="time" name="startTime" id="startTime" v-model="startTime" required>
+        <label for="endDate">Ends</label>
+        <input type="date" name="endDate" id="endDate" v-model="endDate" required>
+        <input type="time" name="endTime" id="endTime" v-model="endTime" required>
+        <button type="button" onclick="insert()">Add Event</button>
+      </form>
+    </div>
+    <script>
+      
+      var app = new Vue({
+        el: '#app',
+        data: {
+          vName: '<%= name %>',
+          dateParam: '<%= date %>',
+          day: '',
+          month: '',
+          year: '',
+          message: 'Here\'s your calendar items',
+          calData: [],
+          view: '<%= view %>',
+          summary: '',
+          startDate: '',
+          startTime: '',
+          endDate: '',
+          endTime: ''
+        },
+      })
+      
+      window.onload = function() {
+        
+      }
+
+      function insert() {
+        var startDateTime = new Date(this.app._data.startDate)
+        var sTime = this.app._data.startTime
+        var sTime = sTime.split(':')
+        startDateTime.setHours(sTime[0], sTime[1])
+        var endDateTime = new Date(this.app._data.endDate)
+        var eTime = this.app._data.endTime
+        var eTime = eTime.split(':')
+        endDateTime.setHours(eTime[0], eTime[1])
+
+        console.log(startDateTime.toISOString())
+        console.log(endDateTime.toISOString())
+
+        var event = {
+          'summary': this.app._data.summary,
+          'start': {
+            'dateTime': startDateTime.toISOString()
+          },
+          'end': {
+            'dateTime': endDateTime.toISOString()
+          }
+        }
+        var params = {
+          'event': event
+        }
+
+        axios.post('/services/insert', params)
+          .then((res) => {
+            console.log(res.data)
+          })
+
+        console.log(event)
+      }
+
+      function seconds_with_leading_zeros(dt) 
+      { 
+        return /\((.*)\)/.exec(new Date().toString())[1];
+      }
+    </script>
+  </body>
+</html>

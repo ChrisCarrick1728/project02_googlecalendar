@@ -86,8 +86,8 @@ function setToken(token, users_id, cb) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(callback, res, users_id, cb) {
-  console.log("CREDENTIAL: " + CREDENTIAL)
+function authorize(callback, params, res, users_id, cb) {
+  //console.log("CREDENTIAL: " + CREDENTIAL)
   const {client_secret, client_id, redirect_uris} = JSON.parse(CREDENTIAL).installed;
   redirect_uris[1] = process.env.GOOGLE_REDIRECT_URI
   const oAuth2Client = new google.auth.OAuth2(
@@ -97,8 +97,8 @@ function authorize(callback, res, users_id, cb) {
   getToken(users_id, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback, res);
     oAuth2Client.setCredentials(JSON.parse(token))
-    callback(oAuth2Client, (err, data) => {
-      return cb(data)
+    callback(oAuth2Client, params, (err, data) => {
+      return cb(err, data)
     })
     
   })
@@ -139,12 +139,34 @@ function returnOauthCode(code, users_id) {
  * Lists the next 10 events on the user's primary calendar.
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-function listEvents(auth, cb) {
+function listEvents(auth, params, cb) {
   //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
     calendarId: 'primary',
     timeMin: (new Date()).toISOString(),
+    maxResults: 10,
+    singleEvents: true,
+    orderBy: 'startTime',
+  }, (err, res) => {
+    if (err) {
+      return cb(err, null)
+    }
+    return cb(null, res.data.items)
+  })
+}
+
+/**
+ * Lists the next 10 events on the user's primary calendar.
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ */
+function listEventsWeek(auth, params, cb) {
+  //console.log(auth)
+  const calendar = google.calendar({version: 'v3', auth});
+  calendar.events.list({
+    calendarId: 'primary',
+    timeMin: params.timeMin || (new Date()).toISOString(),
+    timeMax: params.timeMax,
     maxResults: 10,
     singleEvents: true,
     orderBy: 'startTime',
@@ -177,10 +199,55 @@ function listCalendars(auth, cb) {
   })
 }
 
+function insertEvent(auth, params, cb) {
+  const calendar = google.calendar({version: 'v3', auth})
+  calendar.events.insert({
+    auth: auth,
+    calendarId: 'primary',
+    resource: params.event,
+  }, function (err, event) {
+    if (err) {
+      console.log('There was an error contacting the Calendar service: ' + err)
+      return cb(err, null);
+    }
+    console.log('event created: ')
+    console.log(event.data.htmlLink)
+    return cb(null, event.data);
+  })
+} 
+
+function deleteEvent(auth, params, cb) {
+  console.log('deleteEvent params: ')
+  console.log(params)
+  const calendar = google.calendar({version: 'v3', auth})
+  calendar.events.delete({
+    auth: auth,
+    calendarId: 'primary',
+    eventId: params.id,
+  }, function (err, res) {
+    if (err) {
+      console.log('Error deleteEvent: ' + err)
+      return cb(err, null);
+    }
+    console.log('event deleted successfully')
+    return cb(null, "{'success': 'true'}")
+  })
+  return;
+}
+
+function updateEvent(auth, params, cb) {
+  console.log(params)
+  return;
+}
+
 
 module.exports = {
   authorize: authorize,
   returnOauthCode: returnOauthCode,
   listEvents: listEvents,
-  listCalendars: listCalendars
+  listEventsWeek: listEventsWeek,
+  listCalendars: listCalendars,
+  insertEvent: insertEvent,
+  deleteEvent: deleteEvent,
+  updateEvent: updateEvent
 }

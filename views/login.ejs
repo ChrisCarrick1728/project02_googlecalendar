@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../css/header.css">
+    <link rel="stylesheet" href="../../css/main.css">
+  </head>
+  <body>
+    <header>
+      <nav>
+        <h1>Calendar App</h1>
+      </nav>
+    </header>
+    <div class="loginForm">
+      
+      <div class="loginDiv">
+        <h2>Please Login to Your Account:</h2>
+        <form action="/login" method="POST">
+          <div>
+            <label>Username:</label></br>
+            <input type="text" name="username"/><br/>
+            </div>
+          <div>
+            <label>Password:</label></br>
+            <input type="password" name="password"/>
+          </div>
+          <div>
+            <button type="submit">Login</button>
+          </div>
+          <div>
+            <p>or</p>
+          </div>
+          <div>
+              <button type="button" onclick="window.location.href = '/register'">Register</button>
+            </div>
+        </form>
+        <script src="" async defer></script>
+      </div>
+    </div>
+  </body>
+</html>
