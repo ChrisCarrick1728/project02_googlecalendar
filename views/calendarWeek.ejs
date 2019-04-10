@@ -27,38 +27,20 @@
         <div class="dayTitle"><p>Friday</p></div>
         <div class="dayTitle"><p>Saturday</p></div>
       </div>
-      <div id="monthCalendarEvents" class="noPointer">
-        <div v-if="showEvents" v-for="weeks in monthData.month" class="week">
-          <div v-for="days in weeks"  class="eventBox">
-            <div v-if="monthEvents[days.date].hasEvent == true">
-              <div class="eventTopSpacer"></div>
-              <div class="eventDiv" v-for="events in monthEvents[days.date].events">
-                <button v-bind:class="events.classes" v-on:click="editEvents(days.date, events.id)" ><span v-if="events.displayEventDetails">{{events.summary}}</span><span v-else>&nbsp;</span></button>
-                <!-- events.displayEventDetails -->
-              </div> 
-            </div>
+      <div class="weekViewEvents">
+        <div class="dayInWeekView day" v-for="days in weeks" v-on:click="changeDay(days.day, days.month)">
+          <div class="dayDivHeaders">{{days.day}} <span v-show="false">{{monthEvents[days.date].hasEvent}}</span></div>
+          <div class="weekDayEvents" v-if="monthEvents[days.date].hasEvent" v-for="events in monthEvents[days.date].events">
+            <div><button type="button" v-on:click="editEvents(days.date, events.id)">{{events.summary}}</button></div>
           </div>
         </div>
-      </div>  
-      <div id="monthCalendar">        
-        <div v-for="weeks in monthData.month" class="week" v-bind:id="weeks.indexOf">
-          <div v-for="days in weeks" class="day" v-bind:id="days.getDay" v-on:click="changeDay(days.day, days.month)">
-            <div v-if="days.day == day && days.month == month" class="selectedDay">
-              <div v-if="days.inCurrentMonth == 'true'" class="inCurrentMonth" v-bind:id="days.ISOString">
-                <p class="dayNumber">{{days.day}}</p>
-              </div>
-              <div v-else class="outOfMonth"  v-bind:id="days.ISOString">
-                <p class="dayNumber">{{days.day}}</p>
-              </div>
-            </div>
-            <div v-else class="nonSelectedDay">
-              <div v-if="days.inCurrentMonth == 'true'" class="inCurrentMonth" v-bind:id="days.ISOString">
-                <p class="dayNumber">{{days.day}}</p>
-              </div>
-              <div v-else class="outOfMonth"  v-bind:id="days.ISOString">
-                <p class="dayNumber">{{days.day}}</p>
-              </div>
-            </div>
+      </div>
+      <div class="weekView">
+        <div class="dayInWeekView" v-for="days in weeks">
+          <div v-if="days.day == day && days.month == month" class="selectedDay">
+            
+          </div>
+          <div v-else class="nonSelectedDay">
           </div>
         </div>
       </div>
@@ -187,34 +169,46 @@
         },
         methods: {
           nextMonth: function(day, month, year) {
-            if (month + 1 == 13) {
-              month = 1;
-              year++;
+            var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+            if (day + 7 >= numDaysInMonth[month - 1]) {
+              day = 1 + numDaysInMonth[month - 1] - day;
+              if (month + 1 == 13) {  
+                month = 1;
+                year++;
+              } else {
+                month++
+              }
             } else {
-              month++
+              day += 7
             }
+            this.day = day
             this.month = month
             this.year = year;
-            getMonthView(month, year)
+            getWeekView(day, month, year)
             var url = (this.month + '-' + this.day + '-' + this.year)
-
             this.dateParam = url
             window.history.pushState({}, "", url)
             this.monthName = this.monthNames[this.month - 1]
 
           },
           prevMonth: function(day, month, year) {
-            if (month - 1 == 0) {
-              month = 12;
-              year--;
+            var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+            if (day - 7 <= 0) {
+              if (month - 1 == 0) {
+                month = 12;
+                year--;
+              } else {
+                month--;
+              }
+              day = numDaysInMonth[month - 1] - day
             } else {
-              month--;
+              day--
             }
+            this.day = day
             this.month = month
             this.year = year;
-            getMonthView(month, year)
+            getWeekView(day, month, year)
             var url = (this.month + '-' + this.day + '-' + this.year)
-
             this.dateParam = url
             window.history.pushState({}, "", url)
             this.monthName = this.monthNames[this.month - 1]
@@ -313,7 +307,7 @@
               .then((res) => {
                 console.log(res.data)
                 this.displayAddEvent = false;
-                getMonthView(this.month, this.year)
+                getWeekView(this.month, this.year)
               })
 
             console.log(event)
@@ -322,7 +316,7 @@
             console.log(date + " | " + id)
             this.editEventId = id
             this.editEventDate = date
-            console.log(typeof(this.monthEvents[date].events[id].start.dateTime))
+            //console.log(typeof(this.monthEvents[date].events[id].start.dateTime))
             if (typeof(this.monthEvents[date].events[id].start.dateTime) == 'undefined') {
               // all day event
               this.editEvent.startDate = this.monthEvents[date].events[id].start.date
@@ -356,7 +350,7 @@
               axios.delete('/services/deleteEvent/' + id, params)
                 .then((res) => {
                   if (res.status == 200) {
-                    getMonthView(this.month, this.year) 
+                    getWeekView(this.month, this.year) 
                     this.displayEditEvent = false                   
                   }
                 })
@@ -414,7 +408,7 @@
             axios.post('/services/updateEvent', params)
               .then((res) => {
                 if (res.status == 200) {
-                  getMonthView(this.month, this.year) 
+                  getWeekView(this.month, this.year) 
                   this.displayEditEvent = false                   
                 }
               })
@@ -443,7 +437,7 @@
         this.app._data.today.year = parseInt(this.app._data.today.year)
 
         
-        getMonthView(this.app._data.month, this.app._data.year)
+        getWeekView(this.app._data.month, this.app._data.year)
         
       }
 
@@ -460,42 +454,40 @@
         document.styleSheets[1].rules[11].style.height = (monthBottom - monthTop - 43) / numRows + 'px'
       }
 
-      function getMonthView(month, year) {
-        if (!month || !year) {
+      function getWeekView(day, month, year) {
+        if (!month || !year || !day) {
           var d = new Date()
           month = d.getMonth() + 1
           year = d.getFullYear()
+          day = d.getDate()
         }
 
         var params = {
           'params': {
             'month': month,
-            'year': year
+            'year': year,
+            'day': day
           }
         }
         console.log(params)
-        axios.get('/services/getMonthView', params)
+        axios.get('/services/getWeekView', params)
           .then ((res) => {
-            //console.log(res.data)
+            console.log(res.data)
             this.app._data.monthData = res.data
-            this.app._data.weeks = res.data.month
-
+            this.app._data.weeks = res.data.week
+            var week = {}
             var weekObj = this.app._data.weeks;
-            var month = {}
-            for (var weeks = 0; weeks < Object.keys(weekObj).length; weeks++) {
-              //var month = {}
-              for (var days = 0; days < 7; days++) {
-                var day = weekObj[weeks][days]
-                month[day.year + '-' + day.month + '-' + day.day] = {
-                  hasEvent: false,
-                  day: day.day,
-                  events: {}
-                }                  
-              }
+            for (var days = 0; days < 7; days++) {
+              var day = weekObj[days]
+              week[day.year + '-' + day.month + '-' + day.day] = {
+                hasEvent: false,
+                day: day.day,
+                events: {}
+              }    
             }
-            this.app._data.monthEvents = month
-            setHeight()
-            getMonthEvents(res.data.month)
+            this.app._data.monthEvents = week
+            //setHeight()
+            getWeekEvents(res.data.week)
           })
       }
 
@@ -674,87 +666,143 @@
         return returnObj
       }
 
-      function getMonthEvents(month) {
-        var params = {
-          view: this.app._data.view,  
-          start: this.app._data.monthData.startDay,
-          end: this.app._data.monthData.endDay
-        }
+      function getWeekEvents(week) {
+        // var params = {
+        //   view: this.app._data.view,  
+        //   start: this.app._data.monthData.firstDayOfWeek,
+        //   end: this.app._data.monthData.lastDayOfWeek
+        // }
 
         var currentYear = this.app._data.monthData.currentYear
         var currentMonth = this.app._data.monthData.currentMonth
         var monthEvents = this.app._data.monthEvents
         var monthData = this.app._data.monthData
-
-        axios.post('/services/listEvents', params)
-            .then((res) => {
-              //console.log(res.data)
-              this.app._data.calData = res.data
-              var month = this.app._data.monthEvents
-              //console.log(month)
-              events = res.data
-              for (var event = 0; event < events.length; event++) {
-                var eventStartDate = (events[event].start.date ? events[event].start.date : events[event].start.dateTime.split('T')[0])
-                var eventEndDate = (events[event].end.date ? events[event].end.date : events[event].end.dateTime.split('T')[0])
-                
-                if (typeof(events[event].start.date) != 'undefined') {
-                  var startDay = events[event].start.date.split('-')[2]
-                  var startMonth = events[event].start.date.split('-')[1]
-                  var startYear = events[event].start.date.split('-')[0]
-                } else {
-                  var startDay = events[event].start.dateTime.split('T')[0].split('-')[2]
-                  var startMonth = events[event].start.dateTime.split('T')[0].split('-')[1]
-                  var startYear = events[event].start.dateTime.split('T')[0].split('-')[0]
-                }
-                
-                
-                var spanDays = getNumDaysEventSpans(eventStartDate, eventEndDate)
-                var toEndofWeek = 0
-                for (var i = spanDays.firstDayOfSpan; i < (spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek); i++) {
-                  if (typeof(month[Object.keys(month)[i]].events[events[event].id]) == 'undefined') {
-                    month[Object.keys(month)[i]].events[events[event].id] = Object.assign({}, events[event])
-                  }
-                  if (spanDays.firstDayOfSpan + spanDays.numDays > spanDays.firstDayOfSpan + 1) {
-                    // multi-day event
-                    if (typeof(month[Object.keys(month)[i]].events[events[event].id]) != 'undefined' && month[Object.keys(month)[i]].events[events[event].id].summary != 'empty') {
-                      month[Object.keys(month)[i]].events[events[event].id].classes = 'multiDayEvent'
-                      if (i == spanDays.firstDayOfSpan) {
-                        month[Object.keys(month)[i]].events[events[event].id].classes += ' firstDayOfEvent'
-                      }
-                      if (i == (spanDays.firstDayOfSpan + spanDays.numDays) - 1) {
-                        month[Object.keys(month)[i]].events[events[event].id].classes += ' lastDayOfEvent'
-                      }
-                      if (i % 7 == 0 || i == spanDays.firstDayOfSpan) {
-                        month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = true;
-                      } else {
-                        month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = false;
-                      }
-                    }
-                    //create empty buttons to stretch to end of week
-                    if (i == spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek - 1) {
-                      if ((spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek ) % 7 != 0) {
-                        month[Object.keys(month)[i+1]].events[events[event].id] = Object.assign({}, events[event])
-                        month[Object.keys(month)[i+1]].events[events[event].id].classes = 'emptyButton'
-                        month[Object.keys(month)[i+1]].events[events[event].id].summary = 'empty'
-                        toEndofWeek++
-                      }
-                    }
-                  } else {
-                    month[Object.keys(month)[i]].events[events[event].id].classes = 'singleDayEvent'
-                    month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = true
-                  }                  
-                  month[Object.keys(month)[i]].hasEvent = true;
-
-                  //create empty button
-
-                }
-                
-
-              }
-              this.app._data.showEvents = true
-              
-            })
+        var weeks = this.app._data.weeks
+        var startDay = 0
+        var e = {}
+        for (var i = 0; i < 7; i++) {
+          var sDate = new Date()
+          var eDate = new Date()
+          sDate.setFullYear(weeks[i].year, weeks[i].month - 1, weeks[i].day - 1)
+          eDate.setFullYear(weeks[i].year, weeks[i].month - 1, weeks[i].day - 1)
+          sDate.setUTCHours(0)
+          eDate.setUTCHours(23)
+          
+          var params = {
+            view: this.app._data.view,  
+            start: sDate,
+            end: eDate
+          }
+          getEvents(params, i, (err, data, index) => {
+            console.log("index: " + index)
+            monthEvents[Object.keys(monthEvents)[index]].hasEvent = false;
+            for (var j = 0; j < data.length; j++) {
+              monthEvents[Object.keys(monthEvents)[index]].events[data[j].id] = data[j]
+              monthEvents[Object.keys(monthEvents)[index]].hasEvent = true;
+            }
+            
+          })
+        }
+        
       }
+
+      function getEvents(params, i, cb) {
+        axios.post('/services/listEvents', params)
+          .then((res) => {
+            console.log("index: " + i)
+            console.log(res.data)
+            return cb(null, res.data, i)
+          })
+      }
+
+      function isFirstDayEvent(event) {
+        
+      }
+
+      function isLastDayEvent(event) {
+
+      }
+
+      function isMultiDayEvent(event) {
+
+      }
+
+      function isSingleDayEvent(event) {
+
+      }
+      
+
+        // axios.post('/services/listEvents', params)
+        //     .then((res) => {
+        //       console.log(res.data)
+        //       this.app._data.calData = res.data
+        //       var month = this.app._data.monthEvents
+        //       console.log(month)
+
+
+        //       // events = res.data
+        //       // for (var event = 0; event < events.length; event++) {
+        //       //   var eventStartDate = (events[event].start.date ? events[event].start.date : events[event].start.dateTime.split('T')[0])
+        //       //   var eventEndDate = (events[event].end.date ? events[event].end.date : events[event].end.dateTime.split('T')[0])
+                
+                // if (typeof(events[event].start.date) != 'undefined') {
+                //   var startDay = events[event].start.date.split('-')[2]
+                //   var startMonth = events[event].start.date.split('-')[1]
+                //   var startYear = events[event].start.date.split('-')[0]
+                // } else {
+                //   var startDay = events[event].start.dateTime.split('T')[0].split('-')[2]
+                //   var startMonth = events[event].start.dateTime.split('T')[0].split('-')[1]
+                //   var startYear = events[event].start.dateTime.split('T')[0].split('-')[0]
+                // }
+                
+                
+        //       //   var spanDays = getNumDaysEventSpans(eventStartDate, eventEndDate)
+        //       //   var toEndofWeek = 0
+        //       //   for (var i = spanDays.firstDayOfSpan; i < (spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek); i++) {
+        //       //     if (typeof(month[Object.keys(month)[i]].events[events[event].id]) == 'undefined') {
+        //       //       month[Object.keys(month)[i]].events[events[event].id] = Object.assign({}, events[event])
+        //       //     }
+        //       //     if (spanDays.firstDayOfSpan + spanDays.numDays > spanDays.firstDayOfSpan + 1) {
+        //       //       // multi-day event
+        //       //       if (typeof(month[Object.keys(month)[i]].events[events[event].id]) != 'undefined' && month[Object.keys(month)[i]].events[events[event].id].summary != 'empty') {
+        //       //         month[Object.keys(month)[i]].events[events[event].id].classes = 'multiDayEvent'
+        //       //         if (i == spanDays.firstDayOfSpan) {
+        //       //           month[Object.keys(month)[i]].events[events[event].id].classes += ' firstDayOfEvent'
+        //       //         }
+        //       //         if (i == (spanDays.firstDayOfSpan + spanDays.numDays) - 1) {
+        //       //           month[Object.keys(month)[i]].events[events[event].id].classes += ' lastDayOfEvent'
+        //       //         }
+        //       //         if (i % 7 == 0 || i == spanDays.firstDayOfSpan) {
+        //       //           month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = true;
+        //       //         } else {
+        //       //           month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = false;
+        //       //         }
+        //       //       }
+        //       //       //create empty buttons to stretch to end of week
+        //       //       if (i == spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek - 1) {
+        //       //         if ((spanDays.firstDayOfSpan + spanDays.numDays + toEndofWeek ) % 7 != 0) {
+        //       //           month[Object.keys(month)[i+1]].events[events[event].id] = Object.assign({}, events[event])
+        //       //           month[Object.keys(month)[i+1]].events[events[event].id].classes = 'emptyButton'
+        //       //           month[Object.keys(month)[i+1]].events[events[event].id].summary = 'empty'
+        //       //           toEndofWeek++
+        //       //         }
+        //       //       }
+        //       //     } else {
+        //       //       month[Object.keys(month)[i]].events[events[event].id].classes = 'singleDayEvent'
+        //       //       month[Object.keys(month)[i]].events[events[event].id].displayEventDetails = true
+        //       //     }                  
+        //       //     month[Object.keys(month)[i]].hasEvent = true;
+
+        //       //     //create empty button
+
+        //       //   }
+                
+
+        //       // }
+        //       // this.app._data.showEvents = true
+              
+        //     })
+      //}
     </script>
   </body>
 </html>

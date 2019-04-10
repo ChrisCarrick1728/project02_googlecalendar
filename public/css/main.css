@@ -37,6 +37,7 @@ section#calendar {
   height: 30px;
   box-shadow: none;
   outline: none;
+  background-color: white;
 }
 
 .topBar button:hover {
@@ -67,6 +68,26 @@ section#calendar {
   height: 130px;
   margin-left: auto;
   margin-right: auto;
+  /* pointer-events: none; */
+}
+.noPointer {
+  pointer-events: none;
+}
+
+.allowClick {
+  pointer-events: all;
+}
+
+
+
+.selectedDay {
+  background-color: lightgoldenrodyellow;
+  height: 100%;
+}
+
+.nonSelectedDay {
+  background-color: rgba(0, 0, 0, 0);
+  height: 100%;
 }
 
 .day {
@@ -80,11 +101,33 @@ section#calendar {
   border-bottom: none;
   height: 100%;
   pointer-events: all;
+  z-index: -7;
+}
+
+.eventBox {
+  float: left;
+  width: calc(100% / 7);
+  
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  border-left: none;
+  border-bottom: none;
+  height: 100%;
+  /* pointer-events: none; */
+  z-index: -7;
+}
+.dayNumber {
+  z-index: 7;
+}
+.day:hover {
+  background-color: lightgrey;
+  cursor: pointer;
 }
 
 .outOfMonth {
   color: White;
-  background-color: #aaa;
+  background-color: rgba(100, 100, 100, .5);
   float: left;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -156,11 +199,11 @@ section#calendar {
   margin-top: 5px;
 }
 
-#monthCalendarEvents button {
-  width: 90%;
+#monthCalendarEvents button, .weekDayEvents button {
+  margin-left: 5px;
+  margin-right: 5px;
   padding: 0px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
   text-align: left;
   text-indent: 5px;
   cursor: pointer;
@@ -168,6 +211,9 @@ section#calendar {
   border-radius: 5px;
   padding: 2px;
   background-color: lightcoral;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-right: 5px;
 }
 
 .eventTopSpacer {
@@ -214,4 +260,228 @@ section#calendar {
 
 .loginDiv a:hover {
   color: lightskyblue;
+}
+
+#monthName {
+  position: fixed;
+  top: -15px;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  color: lightseagreen;
+  font-size: 20px;
+}
+
+#creatEvent {
+  position: fixed;
+  top: 47px;
+  left: 20px;
+  
+}
+
+#creatEvent button {
+  height: 30px;
+  border: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: none;
+  outline: none;
+  background-color: white;
+}
+
+#creatEvent button:hover {
+  color: lightskyblue;
+}
+
+#today {
+  position: fixed;
+  top: 47px;
+  left: 110px;
+}
+
+#today button {
+  height: 30px;
+  border: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: none;
+  outline: none;
+  background-color: white;
+}
+
+#today button:hover {
+  color: lightskyblue;
+}
+
+p.currentDay {
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  background-color: lightskyblue;
+}
+
+.overlay {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: rgba(0, 0, 0, .7);
+}
+
+.formDiv {
+  margin-top: 60px;
+  width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: white;
+  box-shadow: 0px 0px 5px 3px black;
+  border-radius: 5px;
+}
+
+.innerFormDiv {
+  padding: 10px;
+}
+
+.innerFormDiv input {
+  width: 95%;
+  height: 30px;
+  text-indent: 10px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  border: none;
+  border: 1px solid #ccc;
+  box-shadow: none;
+  outline: none;
+}
+
+.innerFormDiv input[type='date'] {
+  width: 150px;
+}
+
+.innerFormDiv input[type='time'] {
+  width: 110px;
+}
+
+.innerFormDiv button {
+  height: 30px;
+  border: none;
+  outline: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.innerFormDiv button:hover {
+  color: lightskyblue;
+}
+
+.multiDayEvent {
+  width: 100% !important;
+  margin: 0px !important;
+  pointer-events: all;
+  border-radius: 0px !important;
+  background-color: lightseagreen !important;
+}
+
+.singleDayEvent {
+  pointer-events: all;
+}
+
+.firstDayOfEvent {
+  margin-left: 5px !important;
+  border-top-left-radius: 5px !important;
+  border-bottom-left-radius: 5px !important;
+}
+
+.lastDayOfEvent {
+  margin-right: 5px !important;
+  border-top-right-radius: 5px !important;
+  border-bottom-right-radius: 5px !important;
+}
+
+.emptyButton {
+  background-color: rgba(0, 0, 0, 0) !important;
+  pointer-events: none !important;
+
+}
+
+.dayView {
+  width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  bottom: 0px;
+  top: 100px;
+  left: 0px;
+  right: 0px;
+  position: fixed;
+}
+
+.dayHeader {
+  text-align: center;
+}
+
+.dayView button {
+  width: 100%;
+  margin: 10px 10px;
+  height: 30px;
+  border: none;
+  outline: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  pointer-events: all;
+  cursor: pointer;
+  background-color: lightcoral;
+}
+
+.weekView, .weekViewEvents{
+  width: 100%;
+  position: fixed;
+  top: 100px;
+  bottom:0px;
+  left: 0px;
+  right: 0px;
+}
+
+.weekView {
+  pointer-events: none;
+  z-index: -7;
+}
+.weekViewEvents {
+  pointer-events: all;
+}
+
+.dayInWeekView {
+  width: calc(100%/7);
+  height: 100%;
+  margin: 0px;
+  float: left;
+  border-right: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.dayDiv {
+  width: 100%;
+
+}
+
+.weekDayEvents {
+  width: 100%;
+  
+}
+
+.weekDayEvents div {
+  width: 100%;
+  display: flex;
+}
+
+.weekDayEvents button {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.dayDivHeaders {
+  z-index: 7;
 }

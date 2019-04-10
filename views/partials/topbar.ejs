@@ -1,0 +1,9 @@
+<div class="topBar">
+  <ul>
+    <li><button v-on:click="prevMonth(monthData.currentDay, monthData.currentMonth, monthData.currentYear)"><</button></li>
+    <li><button type="button"class="leftButton" v-on:click="topBarNav('month')">Month</button></li>
+    <li><button type="button"class="centerButton" v-on:click="topBarNav('week')">Week</button></li>
+    <li><button type="button" class="rightButton" v-on:click="topBarNav('day')">Day</button></li>
+    <li><button v-on:click="nextMonth(monthData.currentDay, monthData.currentMonth, monthData.currentYear)">></button></li>
+  </ul>
+</div>

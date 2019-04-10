@@ -29,6 +29,7 @@ const CREDENTIAL = process.env.GOOGLE_CREDENTIALS;
 // Database connection
 const { Pool, Client } = require('pg')
 const connectionString = process.env.DATABASE_URL
+//console.log(connectionString);
 const pool = new Pool({connectionString: connectionString})
 
 // retrieves the token from the database
@@ -95,6 +96,7 @@ function authorize(callback, params, res, users_id, cb) {
 
   // Check if we have previously stored a token.
   getToken(users_id, (err, token) => {
+    //console.log(users_id)
     if (err) return getAccessToken(oAuth2Client, callback, res);
     oAuth2Client.setCredentials(JSON.parse(token))
     callback(oAuth2Client, params, (err, data) => {
@@ -167,7 +169,6 @@ function listEventsWeek(auth, params, cb) {
     calendarId: 'primary',
     timeMin: params.timeMin || (new Date()).toISOString(),
     timeMax: params.timeMax,
-    maxResults: 10,
     singleEvents: true,
     orderBy: 'startTime',
   }, (err, res) => {
@@ -188,7 +189,6 @@ function listCalendars(auth, cb) {
   calendar.calendarList.list({
     calendarId: 'primary',
     timeMin: (new Date()).toISOString(),
-    maxResults: 10,
     singleEvents: true,
     orderBy: 'startTime',
   }, (err, res) => {
@@ -237,7 +237,46 @@ function deleteEvent(auth, params, cb) {
 
 function updateEvent(auth, params, cb) {
   console.log(params)
-  return;
+  const calendar = google.calendar({version: 'v3', auth})
+  calendar.events.get({
+    auth: auth,
+    calendarId: 'primary',
+    eventId: params.id,
+  }, function (err, event) {
+    if (err) {
+      console.log(err)
+      return cb(err, null)
+    }
+    console.log(event.data)
+    //update(err, params, event, cb);
+    event.data.summary = params.event.summary
+    event.data.start.dateTime = params.event.start.dateTime
+    event.data.start.date = params.event.start.date
+    event.data.end.date = params.event.end.date
+    event.data.end.dateTime = params.event.end.dateTime
+    console.log(event.data
+      )
+    const calendar2 = google.calendar({version: 'v3', auth})
+    calendar2.events.patch({
+      auth: auth,
+      calendarId: 'primary',
+      eventId: params.id,
+      resource: params.event
+    }, function (err, res) {
+      if (err) {
+        console.log('Error updateEvent: ' + err)
+        return cb(err, null);
+      }
+      console.log('event updated successfully')
+      console.log(res.data)
+      return cb(null, "{'success': 'true'}")
+    })
+  })
+  
+}
+
+function update(err, params, event, cb) {
+  
 }
 
 

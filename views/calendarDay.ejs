@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../css/header.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vuejs-datepicker"></script>
+  </head>
+  <body>
+    <div id="app">
+      <% include ./partials/header.ejs %>
+      <section id="calendar">
+      <% include ./partials/topbar.ejs %>
+
+      <!-- Default view - Month Calendar -->
+      <div class="dayView">
+        <div class="dayHeader">
+          <div>
+            <h3>{{dateParam}}</h3>
+          </div>
+        </div>
+        <div>
+          <div v-for="events in monthEvents">
+            <div><button type="button" class="dayEventButton" v-on:click="editEvents(monthData.date, events.id, events.index)">{{events.summary}}</button></div>
+            
+          </div>
+        </div>
+      </div>
+      
+
+      <!-- Display month name -->
+      <div id="monthName">
+        <h3>{{monthName}}</h3>
+      </div> 
+      <!-- Create Event -->
+      <div id="creatEvent">
+        <button type="button" v-on:click="createEvent()">+ New Event</button>
+      </div>
+      <!-- Go back to today -->
+      <div id="today">
+        <button type="button" v-on:click="goToToday()">Today: {{this.monthNames[this.today.month]}} {{this.today.day}}, {{this.today.year}}</button>
+      </div>
+
+      <!-- Edit Event Overlay -->
+      <div v-if="displayEditEvent" class="overlay">
+          <div class="formDiv">
+            <div class ="innerFormDiv">
+              <h3>Edit your Event Details:</h3>
+              <form action="none">
+                <label for="summary">Title:</label></br>
+                  <input type="text" name="summary" id="summary" v-model="editEvent.summary" required></br>
+                <label for="allDay">All Day:</label>
+                  <input type="checkbox" name="allDay" id="allDay" v-model="editEvent.allDay">
+                <label for="startDate">Starts</label></br>
+                  <input type="date" name="startDate" id="startDate" value="" v-model="editEvent.startDate" required>
+                  <input v-show="!editEvent.allDay" type="time" name="startTime" id="startTime" step="900" v-model="editEvent.startTime" required></br>
+                <label for="endDate">Ends</label></br>
+                  <input type="date" name="endDate" id="endDate" v-model="editEvent.endDate" required>
+                  <input v-show="!editEvent.allDay" type="time" name="endTime" id="endTime" step="900" v-model="editEvent.endTime" required></br>
+                <button type="button" v-on:click="edit(editEventId)">Edit Event</button>
+                <button type="button" v-on:click="deleteEvent(editEventId)">Delete</button>
+                <button type="button" v-on:click="displayEditEvent = !displayEditEvent">Cancel</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      <!-- Add Event Overlay -->
+      <div v-show="displayAddEvent" class="overlay">
+        <div class="formDiv">
+          <div class ="innerFormDiv">
+            <h3>Add a new Event:</h3>
+            <form action="none">
+              <label for="summary">Title:</label></br>
+                <input type="text" name="summary" id="summary" v-model="addEvent.summary" required></br>
+              <label for="allDay">All Day:</label>
+                <input type="checkbox" name="allDay" id="allDay" v-model="addEvent.allDay">
+              <label for="startDate">Starts</label></br>
+                <input type="date" name="startDate" id="startDate" value="" v-model="addEvent.startDate" required>
+                <input v-show="!addEvent.allDay" type="time" name="startTime" id="startTime" step="900" v-model="addEvent.startTime" required></br>
+              <label for="endDate">Ends</label></br>
+                <input type="date" name="endDate" id="endDate" v-model="addEvent.endDate" required>
+                <input v-show="!addEvent.allDay" type="time" name="endTime" id="endTime" step="900" v-model="addEvent.endTime" required></br>
+              <button type="button" v-on:click="insert()">Add Event</button>
+              <button type="button" v-on:click="displayAddEvent = !displayAddEvent">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      </section>   
+    </div>
+    <script>
+      var app = new Vue({
+        el: '#app',
+        components: {
+          datepicker: vuejsDatepicker
+        },
+        data: {
+          vName: '<%= name %>',
+          message: 'you have been authenticated',
+          monthData: '',
+          weeks: {},
+          monthEvents: '',
+          day: '',
+          month: '',
+          year: '',
+          dateParam: '<%= date %>',
+          calData: '',
+          view: '<%= view %>',
+          showEvents: false,
+          numRows: '',
+          monthName: 'January',
+          today: {
+            'day': '<%= today.day %>',
+            'month': '<%= today.month %>',
+            'year': '<%= today.year %>'
+          },
+          displayAddEvent: false,
+          displayEditEvent: false,
+          editEventId: '',
+          editEventDate: '',
+          addEvent: {
+            summary: '',
+            startDate: '',
+            startTime: '',
+            endDate: '',
+            endTime: '',
+            allDay: true
+          },
+          editEvent: {
+            summary: '',
+            startDate: '',
+            startTime: '',
+            endDate: '',
+            endTime: '',
+            allDay: true
+          },
+          monthNames: {
+            0: 'January',
+            1: 'Feburary',
+            2: 'March',
+            3: 'April',
+            4: 'May',
+            5: 'June',
+            6: 'July',
+            7: 'August',
+            8: 'September',
+            9: 'October',
+            10: 'November',
+            11: 'December'
+          }         
+        },
+        methods: {
+          nextMonth: function(day, month, year) {
+            var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+            if (day == numDaysInMonth[month - 1]) {
+              day = 1;
+              if (month + 1 == 13) {  
+                month = 1;
+                year++;
+              } else {
+                month++
+              }
+            } else {
+              day++
+            }
+            this.day = day
+            this.month = month
+            this.year = year;
+            getDayView(day, month, year)
+            var url = (this.month + '-' + this.day + '-' + this.year)
+            this.dateParam = url
+            window.history.pushState({}, "", url)
+            this.monthName = this.monthNames[this.month - 1]
+
+          },
+          prevMonth: function(day, month, year) {
+            var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+            if (day - 1 == 0) {
+              if (month - 1 == 0) {
+                month = 12;
+                year--;
+              } else {
+                month--;
+              }
+              day = numDaysInMonth[month - 1]
+            } else {
+              day--
+            }
+            this.day = day
+            this.month = month
+            this.year = year;
+            getDayView(day, month, year)
+            var url = (this.month + '-' + this.day + '-' + this.year)
+            this.dateParam = url
+            window.history.pushState({}, "", url)
+            this.monthName = this.monthNames[this.month - 1]
+          },
+          createEvent: function() {
+            console.log('addEvent: ' + this.month + '-' + this.day + '-' + this.year)
+            var d = new Date();
+            d.setFullYear(this.year, this.month - 1, this.day )
+            this.addEvent.startDate = d.toISOString().split('T')[0]
+            this.addEvent.endDate = d.toISOString().split('T')[0]
+            this.displayAddEvent = true;
+          },
+          goToToday: function() {
+            this.month = this.today.month + 1
+            this.day = this.today.day
+            this.year = this.today.year
+            getDayView(this.day, this.month, this.year)
+            var url = (this.month + '-' + this.day + '-' + this.year)
+            window.history.pushState({}, "", url)
+            this.monthName = this.monthNames[this.month - 1]
+          },
+          insert: function() {
+            var startDateTime = new Date(this.addEvent.startDate)
+            console.log(startDateTime.toISOString())
+            var sTime = this.addEvent.startTime
+            if (sTime != '') {
+              var sTime = sTime.split(':')
+              startDateTime.setHours(sTime[0], sTime[1])
+              startDateTime.setDate(startDateTime.getDate())
+            } else {
+              startDateTime.setUTCHours(0)
+            }
+            var endDateTime = new Date(this.addEvent.endDate)
+            var eTime = this.addEvent.endTime
+            if (eTime != '') {
+              var eTime = eTime.split(':')
+              endDateTime.setHours(eTime[0], eTime[1])
+              endDateTime.setDate(endDateTime.getDate())
+            } else {
+              endDateTime.setUTCHours(0)
+            }
+
+            console.log(startDateTime.toISOString())
+            console.log(endDateTime.toISOString())
+
+            if (this.addEvent.allDay) {
+              var event = {
+                'summary': this.addEvent.summary,
+                'start': {
+                  'date': startDateTime.toISOString().split('T')[0]
+                },
+                'end': {
+                  'date': endDateTime.toISOString().split('T')[0]
+                }
+              }
+            } else {
+              var event = {
+                'summary': this.addEvent.summary,
+                'start': {
+                  'dateTime': startDateTime.toISOString()
+                },
+                'end': {
+                  'dateTime': endDateTime.toISOString()
+                }
+              }
+            }
+            var params = {
+              'event': event
+            }
+
+            axios.post('/services/insert', params)
+              .then((res) => {
+                console.log(res.data)
+                this.displayAddEvent = false;
+                getDayView(this.day, this.month, this.year)
+              })
+
+            console.log(event)
+          },
+          editEvents: function(date, id, key) {
+            console.log(date + " | " + id + " | " + key)
+            this.editEventId = id
+            this.editEventDate = date
+            if (typeof(this.monthEvents[key].start.dateTime) == 'undefined') {
+              // all day event
+              this.editEvent.startDate = this.monthEvents[key].start.date
+              this.editEvent.endDate = this.monthEvents[key].end.date
+              this.editEvent.allDay = true
+
+            } else {
+              // Has time
+              var sDate = this.monthEvents[key].start.dateTime
+              var eDate = this.monthEvents[key].end.dateTime
+              var sd = new Date(sDate)
+              var ed = new Date(eDate)
+              sTime = sd.toTimeString().split(':')
+              eTime = ed.toTimeString().split(':')
+              this.editEvent.startTime = sTime[0] + ":" + sTime[1]
+              this.editEvent.endTime = eTime[0] + ":" + eTime[1]
+              this.editEvent.startDate = sd.toISOString().split('T')[0]
+              this.editEvent.endDate = ed.toISOString().split('T')[0]
+              this.editEvent.allDay = false
+              console.log(this.editEvent)
+            }
+            this.editEvent.summary = this.monthEvents[key].summary
+            this.displayEditEvent = true
+          },
+          deleteEvent: function(id) {
+            console.log('delete event: ' + id)
+            if (confirm("Are you sure you want to delete this event?")) {
+              var params = {
+                'id': id
+              }
+              axios.delete('/services/deleteEvent/' + id, params)
+                .then((res) => {
+                  if (res.status == 200) {
+                    getDayView(this.month, this.year) 
+                    this.displayEditEvent = false                   
+                  }
+                })
+            } 
+          },
+          edit: function(id) {
+            console.log('edit event: ' + id)
+            var startDateTime = new Date(this.editEvent.startDate)
+            console.log(startDateTime.toISOString())
+            var sTime = this.editEvent.startTime
+            if (sTime != '') {
+              var sTime = sTime.split(':')
+              startDateTime.setHours(sTime[0], sTime[1])
+              startDateTime.setDate(startDateTime.getDate() + 1)
+            } else {
+              startDateTime.setUTCHours(0)
+            }
+            var endDateTime = new Date(this.editEvent.endDate)
+            var eTime = this.editEvent.endTime
+            if (eTime != '') {
+              var eTime = eTime.split(':')
+              endDateTime.setHours(eTime[0], eTime[1])
+              endDateTime.setDate(endDateTime.getDate() + 1)
+            } else {
+              endDateTime.setUTCHours(0)
+            }
+
+            console.log(startDateTime.toISOString())
+            console.log(endDateTime.toISOString())
+            if (this.editEvent.allDay) {
+              var event = {
+                'summary': this.editEvent.summary,
+                'start': {
+                  'date': startDateTime.toISOString().split('T')[0]
+                },
+                'end': {
+                  'date': endDateTime.toISOString().split('T')[0]
+                }
+              }
+            } else {
+              var event = {
+                'summary': this.editEvent.summary,
+                'start': {
+                  'dateTime': startDateTime.toISOString()
+                },
+                'end': {
+                  'dateTime': endDateTime.toISOString()
+                }
+              }
+            }
+            var params = {
+              'id': id,
+              'event': event
+            }
+            axios.post('/services/updateEvent', params)
+              .then((res) => {
+                if (res.status == 200) {
+                  getDayView(this.month, this.year) 
+                  this.displayEditEvent = false                   
+                }
+              })
+          },
+          topBarNav: function(dest) {
+            var url = '/calendar/' + dest + '/' + this.dateParam
+            window.location.href = url
+          }
+          
+        }
+      })
+      window.onload = function() {
+        // Get Month Calendar View
+        
+        var d = this.app._data.dateParam
+        var dObject = d.split('-')
+        this.app._data.day   = parseInt(dObject[1])
+        this.app._data.month = parseInt(dObject[0])
+        this.app._data.year  = parseInt(dObject[2])
+        var d = new Date()
+        d.setFullYear(dObject[2], dObject[0], dObject[1])
+        this.app._data.monthName = this.app._data.monthNames[d.getMonth() - 1]
+        
+        this.app._data.today.day = parseInt(this.app._data.today.day)
+        this.app._data.today.month = parseInt(this.app._data.today.month)
+        this.app._data.today.year = parseInt(this.app._data.today.year)
+
+        getDayView(this.app._data.day, this.app._data.month, this.app._data.year)
+        
+      }
+
+      function getDayView(day, month, year) {
+        if (!month || !year || !day) {
+          var d = new Date()
+          month = d.getMonth() + 1
+          year = d.getFullYear()
+        }
+
+        var params = {
+          'params': {
+            'day': day,
+            'month': month,
+            'year': year
+          }
+        }
+        axios.get('/services/getDayView', params)
+          .then ((res) => {
+            console.log(res.data)
+            this.app._data.monthData = res.data
+            this.app._data.weeks = res.data.month
+
+            
+            var m = this.app._data.monthData
+            this.app._data.monthEvents = month
+            //setHeight()
+            getDayEvents(m.currentDay, m.currentMonth, m.currentYear)
+          })
+      }
+
+      window.onresize = function() {
+        setHeight();
+      }
+
+      function setHeight() {
+        var monthTop = document.getElementById('monthCalendar').offsetTop;
+        var monthBottom = window.innerHeight;
+        var numRows = Object.keys(this.app._data.weeks).length;
+        console.log('nr: ' + numRows)
+        document.getElementById('monthCalendarEvents').style.top = monthTop + 43  + 'px'
+        document.styleSheets[1].rules[11].style.height = (monthBottom - monthTop - 43) / numRows + 'px'
+      }
+
+      function getDayEvents(day, month, year) {
+      var sDate = new Date()
+      var eDate = new Date()
+      sDate.setFullYear(year, month - 1, day - 1) 
+      eDate.setFullYear(year, month - 1, day - 1)  
+      sDate.setUTCHours(0)
+      eDate.setUTCHours(23)
+      var params = {
+          view: this.app._data.view,  
+          start: sDate.toISOString(),
+          end: eDate.toISOString()
+        }
+
+        var currentYear = this.app._data.monthData.currentYear
+        var currentMonth = this.app._data.monthData.currentMonth
+        var monthEvents = this.app._data.monthEvents
+        var monthData = this.app._data.monthData
+
+        axios.post('/services/listEvents', params)
+            .then((res) => {
+              console.log(res.data)
+              
+              this.app._data.monthEvents = Object.assign({}, res.data)
+              for (var i = 0; i < Object.keys(this.app._data.monthEvents).length; i++) {
+                this.app._data.monthEvents[i].index = i
+              }
+              
+            })
+      }
+    </script>
+  </body>
+</html>

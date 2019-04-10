@@ -162,7 +162,6 @@ app.get('/auth', require('connect-ensure-login').ensureLoggedIn(), (req, res) =>
 
 app.get('/googleConnect', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   db.googleAuth.authorize(db.googleAuth.listEvents, null, res, req.user.id, (err, data) => {
-    //console.log(data);
     res.redirect('/calendar/month/')
   })
 })
@@ -176,24 +175,70 @@ app.get('/googleAuth', require('connect-ensure-login').ensureLoggedIn(), (req, r
 // Month View
 app.get('/calendar/month/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var date = getDateFromPath(req.path)
-  if (typeof(date === 'undefined')) {
+  console.log(date + " | " + typeof(date))
+  if (date == '') {
     d = new Date();
-    date = d.getMonth() + '-' + d.getFullYear()
+    date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
+    console.log(date);
+    res.redirect('/calendar/month/' + date);
+    res.end();
+  } else {
+    console.log(date)
+    var t = new Date()
+    var today = {
+      'day': t.getDate(),
+      'month': t.getMonth(),
+      'year' : t.getFullYear()
+    } 
+    var params = {'name': req.user.username, 'date': date, 'view': 'month', 'today': today }
+    res.render('calendar', params)
   }
-  var params = {'name': req.user.username, 'date': date, 'view': 'month'}
-  res.render('calendar', params)
 })
 
 // Week View
 app.get('/calendar/week/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  var params = {'name': req.user.username, 'date': getDateFromPath(req.path), 'view': 'week'}
-  res.render('calendar', params)
+  var date = getDateFromPath(req.path)
+  console.log('day' + " | " + typeof(date))
+  if (date == '') {
+    d = new Date();
+    date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
+    console.log(date);
+    res.redirect('/calendar/week/' + date);
+    res.end();
+  } else {
+    console.log(date)
+    var t = new Date()
+    var today = {
+      'day': t.getDate(),
+      'month': t.getMonth(),
+      'year' : t.getFullYear()
+    } 
+    var params = {'name': req.user.username, 'date': date, 'view': 'month', 'today': today }
+    res.render('calendarWeek', params)
+  }
 })
 
 // Day View
 app.get('/calendar/day/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  var params = {'name': req.user.username, 'date': getDateFromPath(req.path), 'view': 'day'}
-  res.render('calendar', params)
+  var date = getDateFromPath(req.path)
+  console.log('day' + " | " + typeof(date))
+  if (date == '') {
+    d = new Date();
+    date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
+    console.log(date);
+    res.redirect('/calendar/day/' + date);
+    res.end();
+  } else {
+    console.log(date)
+    var t = new Date()
+    var today = {
+      'day': t.getDate(),
+      'month': t.getMonth(),
+      'year' : t.getFullYear()
+    } 
+    var params = {'name': req.user.username, 'date': date, 'view': 'month', 'today': today }
+    res.render('calendarDay', params)
+  }
 })
 
 //Insert Event
@@ -277,29 +322,46 @@ app.delete('/services/deleteEvent/*', require('connect-ensure-login').ensureLogg
   })
 })
 
-app.get('/services/updateEvent', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  db.googleAuth.authorize(db.googleAuth.updateEvent, req.body, res, req.user.id, (err, data) => {
-    res.writeHead('200', {'content-type': 'application/json'})
-    res.write(JSON.stringify(data))
-    res.end();
+app.post('/services/updateEvent', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  var params = req.body
+  console.log(params)
+  db.googleAuth.authorize(db.googleAuth.updateEvent, params, res, req.user.id, (err, data) => {
+    if (err) {
+      res.writeHead('400', {'content-type': 'application/json'})
+      res.write("{'success': 'false', 'error': '" + err + "'}")
+      res.end();
+    } else {
+      res.writeHead('200', {'content-type': 'application/json'})
+      res.write(JSON.stringify(data))
+      res.end();
+    }
   })
 })
 
 app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var cDate = new Date() //req.query.date)
   console.log(req.query)
-  cDate.setFullYear(req.query.year, req.query.month - 1, 1)
+  cDate.setFullYear(req.query.year, req.query.month - 1)
   console.log(cDate)
   var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
+  var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+  var leapYear = calendar.isleap(cDate.getFullYear())
+  var lastDayInView = c[c.length -1][c[c.length - 1].length - 1]
+  lastDayInView = lastDayInView.toISOString().split('T')[0].split('-')[2]
   var data = {
     'ISOString': cDate.toISOString(),
     'currentYear': cDate.getFullYear(),
     'currentMonth': cDate.getMonth() + 1,
-    'currentDay': cDate.getDay(),
+    'currentDay': cDate.getDate(),
     'startDay' : c[0][0],
+    'numDaysInMonth': numDaysInMonth[((leapYear && cDate.getMonth == 1) ? 12 : cDate.getMonth())],
+    'lastDayInView': parseInt(lastDayInView),
+    'firstDayInView': c[0][0].toISOString().split('T')[0].split('-')[2],
+    'leapYear': leapYear,
     'endDay' : c[c.length - 1][c[c.length - 1].length - 1],
     'month': {}
   }
+  console.log(data)
   //Build Response
   for (var weeks = 0; weeks < c.length; weeks++) {
     var week = {}
@@ -323,6 +385,101 @@ app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn
     }
     data.month[weeks] = week;
   }
+  res.writeHead('200', {'content-type': 'application/json'})
+  res.write(JSON.stringify(data))
+  res.end();
+})
+
+app.get('/services/getWeekView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  var cDate = new Date() 
+  console.log(req.query)
+  cDate.setFullYear(req.query.year, req.query.month - 1, req.query.day - 1)
+  cDate.setUTCHours(6,0,0,0)
+  console.log(cDate)
+  var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
+  console.log(c)
+  var firstDayOfWeek = 0;
+  var lastDayOfWeek = 0;
+  var weekObj = 0;
+  for (var week = 0; week < c.length; week++) {
+    for (var day = 0; day < 7; day++) {
+      if (c[week][day].getMonth() == cDate.getMonth()) {
+        if (c[week][day].getDate() == cDate.getDate()) {
+          firstDayOfWeek = c[week][0]
+          lastDayOfWeek = c[week][6]
+          weekObj = c[week]
+        }
+      }
+    }
+  }
+  var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+  var leapYear = calendar.isleap(cDate.getFullYear())
+  var lastDayInView = c[c.length -1][c[c.length - 1].length - 1]
+  lastDayInView = lastDayInView.toISOString().split('T')[0].split('-')[2]
+  var data = {
+    'ISOString': cDate.toISOString(),
+    'currentYear': cDate.getFullYear(),
+    'currentMonth': cDate.getMonth() + 1,
+    'currentDay': cDate.getDate(),
+    'firstDayOfWeek': firstDayOfWeek,
+    'lastDayOfWeek': lastDayOfWeek,
+    'numDaysInMonth': numDaysInMonth[((leapYear && cDate.getMonth == 1) ? 12 : cDate.getMonth())],
+    'lastDayInView': parseInt(lastDayInView),
+    'leapYear': leapYear,
+    'date': cDate.toISOString().split('T')[0],
+    'week': {}
+  }
+  var week = {}
+  for (var i = 0; i < weekObj.length; i++) {
+    var ISOString = weekObj[i].toISOString()
+    var date1 = ISOString.split('T')[0]
+    var date = date1.split('-')
+    var day = date[2]
+    var month = date[1]
+    var year = date[0]
+    var currentDay = (cDate.getDate() == day? true : false)
+    week[i] = {
+      'ISOString': ISOString,
+      'date': date1,
+      'day': day,
+      'year': year,
+      'month': month,
+      'currentDay': currentDay
+    }
+  }
+  data.week = week
+  console.log(data)
+  //Build Response
+  
+  res.writeHead('200', {'content-type': 'application/json'})
+  res.write(JSON.stringify(data))
+  res.end();
+})
+
+app.get('/services/getDayView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
+  var cDate = new Date() 
+  console.log(req.query)
+  cDate.setFullYear(req.query.year, req.query.month - 1, req.query.day)
+  console.log(cDate)
+  var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
+  var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
+  var leapYear = calendar.isleap(cDate.getFullYear())
+  var lastDayInView = c[c.length -1][c[c.length - 1].length - 1]
+  lastDayInView = lastDayInView.toISOString().split('T')[0].split('-')[2]
+  var data = {
+    'ISOString': cDate.toISOString(),
+    'currentYear': cDate.getFullYear(),
+    'currentMonth': cDate.getMonth() + 1,
+    'currentDay': cDate.getDate(),
+    'numDaysInMonth': numDaysInMonth[((leapYear && cDate.getMonth == 1) ? 12 : cDate.getMonth())],
+    'lastDayInView': parseInt(lastDayInView),
+    'leapYear': leapYear,
+    'date': cDate.toISOString().split('T')[0],
+    'month': {}
+  }
+  console.log(data)
+  //Build Response
+  
   res.writeHead('200', {'content-type': 'application/json'})
   res.write(JSON.stringify(data))
   res.end();
