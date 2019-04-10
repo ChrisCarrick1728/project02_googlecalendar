@@ -29,7 +29,6 @@ const CREDENTIAL = process.env.GOOGLE_CREDENTIALS;
 // Database connection
 const { Pool, Client } = require('pg')
 const connectionString = process.env.DATABASE_URL
-//console.log(connectionString);
 const pool = new Pool({connectionString: connectionString})
 
 // retrieves the token from the database
@@ -42,9 +41,7 @@ function getToken(users_id, cb) {
         console.log('getToken() error: ' + err)
         return cb("read from database failed", null)
       }
-      //console.log("db results: " + result.rows[0])
       if (result.rowCount != 0 && result.rows[0].access_token != null) {
-        //console.log (JSON.stringify(result.rows[0]))
         return cb(null, JSON.stringify(result.rows[0]))
       }
       return cb(true, null)
@@ -55,7 +52,6 @@ function getToken(users_id, cb) {
 // retrieves the token from the database
 // returns a JSON object
 function setToken(token, users_id, cb) {
-  console.log(token);
   var tokenObject = token
   var access_token = tokenObject.access_token
   var refresh_token = tokenObject.refresh_token
@@ -70,7 +66,6 @@ function setToken(token, users_id, cb) {
             + "', token_type = '" + token_type
             + "', expiry_date = '" + expiry_date
             + "' WHERE users_id= '" + users_id + "'"
-    console.log(sql)
     await pool.query(sql, (err, result) => {
       if (err) {
         return cb("Save to database failed: " + err)
@@ -88,7 +83,6 @@ function setToken(token, users_id, cb) {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(callback, params, res, users_id, cb) {
-  //console.log("CREDENTIAL: " + CREDENTIAL)
   const {client_secret, client_id, redirect_uris} = JSON.parse(CREDENTIAL).installed;
   redirect_uris[1] = process.env.GOOGLE_REDIRECT_URI
   const oAuth2Client = new google.auth.OAuth2(
@@ -96,7 +90,6 @@ function authorize(callback, params, res, users_id, cb) {
 
   // Check if we have previously stored a token.
   getToken(users_id, (err, token) => {
-    //console.log(users_id)
     if (err) return getAccessToken(oAuth2Client, callback, res);
     oAuth2Client.setCredentials(JSON.parse(token))
     callback(oAuth2Client, params, (err, data) => {
@@ -132,7 +125,6 @@ function returnOauthCode(code, users_id) {
     // Store the token to disk for later program executions
     setToken(token, users_id, (err) => {
       if (err) return console.error(err);
-      console.log("token stored to db");
     })
   });
 }
@@ -142,7 +134,6 @@ function returnOauthCode(code, users_id) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function listEvents(auth, params, cb) {
-  //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
     calendarId: 'primary',
@@ -163,7 +154,6 @@ function listEvents(auth, params, cb) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function listEventsWeek(auth, params, cb) {
-  //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
     calendarId: 'primary',
@@ -184,7 +174,6 @@ function listEventsWeek(auth, params, cb) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function listCalendars(auth, cb) {
-  //console.log(auth)
   const calendar = google.calendar({version: 'v3', auth});
   calendar.calendarList.list({
     calendarId: 'primary',
@@ -248,7 +237,6 @@ function updateEvent(auth, params, cb) {
       return cb(err, null)
     }
     console.log(event.data)
-    //update(err, params, event, cb);
     event.data.summary = params.event.summary
     event.data.start.dateTime = params.event.start.dateTime
     event.data.start.date = params.event.start.date

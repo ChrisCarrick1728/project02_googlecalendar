@@ -48,7 +48,6 @@ passport.deserializeUser(function(id, cb) {
 
 function getDateFromPath(path) {
   var p = path.split('/');
-  console.log(p)
   return p[p.length - 1]
 }
 
@@ -75,13 +74,10 @@ function getFirstDayOfWeek(date) {
   var day = calendar.weekday(d[2], d[0], d[1])
   var cal = new calendar.Calendar(6).monthdatescalendar(d[2], d[0])
   var nDate = (d[2] + '-' + d[0] + '-' + d[1])
-  //console.log('week: ' + parseInt((d[1] + day) % 7))
-  //console.log('nDate: ' + nDate)
   for (var i = 0; i < cal.length; i++) {
     for (var w = 0; w < cal[i].length; w++) {
       var dText = cal[i][w]
       var tempDate = dText.toString().split(' ')
-      //console.log("dText: "+ monthName(d[0]) + " - " + tempDate[1] + " | " + d[1] + " - " + tempDate[2])
       
       if (tempDate[2] === d[1] && tempDate[1] === monthName(d[0])) {
         return cal[i]
@@ -144,7 +140,6 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   //verify passwords match
-  console.log(req.body)
   if (req.body.password1 !== req.body.password2) {
     res.redirect('/register')
   } else {
@@ -175,15 +170,12 @@ app.get('/googleAuth', require('connect-ensure-login').ensureLoggedIn(), (req, r
 // Month View
 app.get('/calendar/month/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var date = getDateFromPath(req.path)
-  console.log(date + " | " + typeof(date))
   if (date == '') {
     d = new Date();
     date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
-    console.log(date);
     res.redirect('/calendar/month/' + date);
     res.end();
   } else {
-    console.log(date)
     var t = new Date()
     var today = {
       'day': t.getDate(),
@@ -198,15 +190,12 @@ app.get('/calendar/month/*', require('connect-ensure-login').ensureLoggedIn(), (
 // Week View
 app.get('/calendar/week/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var date = getDateFromPath(req.path)
-  console.log('day' + " | " + typeof(date))
   if (date == '') {
     d = new Date();
     date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
-    console.log(date);
     res.redirect('/calendar/week/' + date);
     res.end();
   } else {
-    console.log(date)
     var t = new Date()
     var today = {
       'day': t.getDate(),
@@ -221,15 +210,12 @@ app.get('/calendar/week/*', require('connect-ensure-login').ensureLoggedIn(), (r
 // Day View
 app.get('/calendar/day/*', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var date = getDateFromPath(req.path)
-  console.log('day' + " | " + typeof(date))
   if (date == '') {
     d = new Date();
     date = parseInt(d.getMonth() + 1) + '-' + d.getDate() + '-' + d.getFullYear()
-    console.log(date);
     res.redirect('/calendar/day/' + date);
     res.end();
   } else {
-    console.log(date)
     var t = new Date()
     var today = {
       'day': t.getDate(),
@@ -250,9 +236,6 @@ app.get('/insert', require('connect-ensure-login').ensureLoggedIn(), (req, res) 
 
 // Services
 app.post('/services/listEvents', (req, res) => {
-  console.log("post: ")
-  console.log(req.body)
-
   var sdate = ''
   var edate = ''
 
@@ -267,16 +250,13 @@ app.post('/services/listEvents', (req, res) => {
     sdate = (formatDate(req.body.start))
     edate = (formatDate(req.body.start))
     edate.setHours(24)
-    console.log(sdate + " | " + edate)
     var params = {
       timeMax: edate.toISOString(),
       timeMin: sdate.toISOString()
     }
   } else if (req.body.view === 'month') {
-    console.log(req.body.start + " | " + req.body.end)
     sdate = new Date(req.body.start)
     edate = new Date(req.body.end)
-    console.log(sdate + " | " + edate)
     var params = {
       timeMax: edate.toISOString(),
       timeMin: sdate.toISOString()
@@ -284,14 +264,12 @@ app.post('/services/listEvents', (req, res) => {
   }
   db.googleAuth.authorize(db.googleAuth.listEventsWeek, params, res, req.user.id, (err, data) => {
     res.writeHead('200', {'content-type': 'application/json'})
-    //console.log(data)
     res.write(JSON.stringify(data))
     res.end();
   })
 })
 
 app.post('/services/insert', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  console.log(req.body.event)
   db.googleAuth.authorize(db.googleAuth.insertEvent, req.body, res, req.user.id, (err, data) => {
     if (!err) {
       res.writeHead('200', {'content-type': 'application/json'})
@@ -324,7 +302,6 @@ app.delete('/services/deleteEvent/*', require('connect-ensure-login').ensureLogg
 
 app.post('/services/updateEvent', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var params = req.body
-  console.log(params)
   db.googleAuth.authorize(db.googleAuth.updateEvent, params, res, req.user.id, (err, data) => {
     if (err) {
       res.writeHead('400', {'content-type': 'application/json'})
@@ -339,10 +316,8 @@ app.post('/services/updateEvent', require('connect-ensure-login').ensureLoggedIn
 })
 
 app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
-  var cDate = new Date() //req.query.date)
-  console.log(req.query)
+  var cDate = new Date() 
   cDate.setFullYear(req.query.year, req.query.month - 1)
-  console.log(cDate)
   var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
   var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
   var leapYear = calendar.isleap(cDate.getFullYear())
@@ -361,7 +336,7 @@ app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn
     'endDay' : c[c.length - 1][c[c.length - 1].length - 1],
     'month': {}
   }
-  console.log(data)
+  
   //Build Response
   for (var weeks = 0; weeks < c.length; weeks++) {
     var week = {}
@@ -371,9 +346,7 @@ app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn
       var day = date[2]
       var month = date[1]
       var year = date [0]
-      //console.log( month + " | " + parseInt(cDate.getMonth() + 1) )
       var inCurrentMonth = ((month == cDate.getMonth() + 1) ? 'true' : 'false')
-      //console.log(inCurrentMonth)
       week[days] = {
         'ISOString': c[weeks][days].toISOString(),
         'date': c[weeks][days].toISOString().split('T')[0],
@@ -392,12 +365,9 @@ app.get('/services/getMonthView', require('connect-ensure-login').ensureLoggedIn
 
 app.get('/services/getWeekView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var cDate = new Date() 
-  console.log(req.query)
   cDate.setFullYear(req.query.year, req.query.month - 1, req.query.day - 1)
   cDate.setUTCHours(6,0,0,0)
-  console.log(cDate)
   var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
-  console.log(c)
   var firstDayOfWeek = 0;
   var lastDayOfWeek = 0;
   var weekObj = 0;
@@ -448,7 +418,6 @@ app.get('/services/getWeekView', require('connect-ensure-login').ensureLoggedIn(
     }
   }
   data.week = week
-  console.log(data)
   //Build Response
   
   res.writeHead('200', {'content-type': 'application/json'})
@@ -458,9 +427,7 @@ app.get('/services/getWeekView', require('connect-ensure-login').ensureLoggedIn(
 
 app.get('/services/getDayView', require('connect-ensure-login').ensureLoggedIn(), (req, res) => {
   var cDate = new Date() 
-  console.log(req.query)
   cDate.setFullYear(req.query.year, req.query.month - 1, req.query.day)
-  console.log(cDate)
   var c = new calendar.Calendar(6).monthdatescalendar(cDate.getFullYear(), cDate.getMonth() + 1)
   var numDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 ,31, 29]
   var leapYear = calendar.isleap(cDate.getFullYear())
@@ -477,7 +444,6 @@ app.get('/services/getDayView', require('connect-ensure-login').ensureLoggedIn()
     'date': cDate.toISOString().split('T')[0],
     'month': {}
   }
-  console.log(data)
   //Build Response
   
   res.writeHead('200', {'content-type': 'application/json'})

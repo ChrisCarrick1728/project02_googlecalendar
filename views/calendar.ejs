@@ -220,7 +220,6 @@
             this.monthName = this.monthNames[this.month - 1]
           },
           changeDay: function(day, month) {
-            console.log(parseInt(day) + " | " + parseInt(month))
             month = parseInt(month)
             day = parseInt(day)
             this.day = day
@@ -228,14 +227,11 @@
               
               if (this.month > month) {
                 this.prevMonth(month + 1, this.year)
-                console.log("PM: " + month + " | " + day)
               } else {
                 this.nextMonth(month - 1, this.year)
-                console.log("NM: " + month + " | " + day)
               }
             } else {
               this.month = month
-              console.log("CM: " + month + " | " + day)
               var url = (this.month + '-' + this.day + '-' + this.year)
               this.dateParam = url
               window.history.pushState({}, "", url)
@@ -244,7 +240,6 @@
 
           },
           createEvent: function() {
-            console.log('addEvent: ' + this.month + '-' + this.day + '-' + this.year)
             var d = new Date();
             d.setFullYear(this.year, this.month - 1, this.day -1)
             this.addEvent.startDate = d.toISOString().split('T')[0]
@@ -262,7 +257,6 @@
           },
           insert: function() {
             var startDateTime = new Date(this.addEvent.startDate)
-            console.log(startDateTime.toISOString())
             var sTime = this.addEvent.startTime
             if (sTime != '') {
               var sTime = sTime.split(':')
@@ -280,9 +274,6 @@
             } else {
               endDateTime.setUTCHours(0)
             }
-
-            console.log(startDateTime.toISOString())
-            console.log(endDateTime.toISOString())
 
             if (this.addEvent.allDay) {
               var event = {
@@ -311,18 +302,14 @@
 
             axios.post('/services/insert', params)
               .then((res) => {
-                console.log(res.data)
                 this.displayAddEvent = false;
                 getMonthView(this.month, this.year)
               })
 
-            console.log(event)
           },
           editEvents: function(date, id) {
-            console.log(date + " | " + id)
             this.editEventId = id
             this.editEventDate = date
-            console.log(typeof(this.monthEvents[date].events[id].start.dateTime))
             if (typeof(this.monthEvents[date].events[id].start.dateTime) == 'undefined') {
               // all day event
               this.editEvent.startDate = this.monthEvents[date].events[id].start.date
@@ -342,13 +329,11 @@
               this.editEvent.startDate = sd.toISOString().split('T')[0]
               this.editEvent.endDate = ed.toISOString().split('T')[0]
               this.editEvent.allDay = false
-              console.log(this.editEvent)
             }
             this.editEvent.summary = this.monthEvents[date].events[id].summary
             this.displayEditEvent = true
           },
           deleteEvent: function(id) {
-            console.log('delete event: ' + id)
             if (confirm("Are you sure you want to delete this event?")) {
               var params = {
                 'id': id
@@ -363,9 +348,7 @@
             } 
           },
           edit: function(id) {
-            console.log('edit event: ' + id)
             var startDateTime = new Date(this.editEvent.startDate)
-            console.log(startDateTime.toISOString())
             var sTime = this.editEvent.startTime
             if (sTime != '') {
               var sTime = sTime.split(':')
@@ -383,9 +366,6 @@
             } else {
               endDateTime.setUTCHours(0)
             }
-
-            console.log(startDateTime.toISOString())
-            console.log(endDateTime.toISOString())
             if (this.editEvent.allDay) {
               var event = {
                 'summary': this.editEvent.summary,
@@ -455,7 +435,6 @@
         var monthTop = document.getElementById('monthCalendar').offsetTop;
         var monthBottom = window.innerHeight;
         var numRows = Object.keys(this.app._data.weeks).length;
-        console.log('nr: ' + numRows)
         document.getElementById('monthCalendarEvents').style.top = monthTop + 43  + 'px'
         document.styleSheets[1].rules[11].style.height = (monthBottom - monthTop - 43) / numRows + 'px'
       }
@@ -476,14 +455,12 @@
         console.log(params)
         axios.get('/services/getMonthView', params)
           .then ((res) => {
-            //console.log(res.data)
             this.app._data.monthData = res.data
             this.app._data.weeks = res.data.month
 
             var weekObj = this.app._data.weeks;
             var month = {}
             for (var weeks = 0; weeks < Object.keys(weekObj).length; weeks++) {
-              //var month = {}
               for (var days = 0; days < 7; days++) {
                 var day = weekObj[weeks][days]
                 month[day.year + '-' + day.month + '-' + day.day] = {
@@ -584,13 +561,10 @@
             returnObj.numDays += monthData.length * 7
             return returnObj
           } else if (startMonth == currentMonth - 1) {
-            console.log('here2')
             if (startDay >= monthEvents[Object.keys(monthEvents)[0]].day) {
-              console.log('here1')
               for (var i = 0; i < 7; i++) {
                 if (startDay == monthData.month[0][i].day) {
                   returnObj.firstDayOfSpan = i
-                  console.log('here')
                   break
                 }
               }  
@@ -616,7 +590,6 @@
             // event starts in previous month
             if (startDay >= monthEvents[Object.keys(monthEvents)[0]].day) {
               //event starts in previous month but current view
-              //console.log('here')
               for (var i = 0; i < 7; i++) {
                 if (startDay == monthData.month[0][i].day) {
                   returnObj.firstDayOfSpan = i
@@ -666,11 +639,8 @@
         
         returnObj.numDays = numDays
         if (endMonth > currentMonth) {
-          //console.log(numDaysInView - returnObj.firstDayOfSpan)
           returnObj.numDays = numDaysInView - returnObj.firstDayOfSpan
-          //console.log(returnObj)
         }
-        //console.log(returnObj)
         return returnObj
       }
 
@@ -688,10 +658,8 @@
 
         axios.post('/services/listEvents', params)
             .then((res) => {
-              //console.log(res.data)
               this.app._data.calData = res.data
               var month = this.app._data.monthEvents
-              //console.log(month)
               events = res.data
               for (var event = 0; event < events.length; event++) {
                 var eventStartDate = (events[event].start.date ? events[event].start.date : events[event].start.dateTime.split('T')[0])
